@@ -52,10 +52,18 @@ const Simulator = () => {
   const handleSend = async (userText) => {
     if (!userText.trim() || isLoading) return;
 
-    // Special trigger for EVM simulation
-    if (userText.toLowerCase().includes('vote') && messages.length > 3) {
+    const lowerText = userText.toLowerCase();
+
+    // Trigger EVM simulation
+    if (lowerText.includes('vote') && messages.length > 3) {
       setMessages(prev => [...prev, { role: 'user', text: userText }]);
       setTimeout(() => setShowEvm(true), 1000);
+      return;
+    }
+
+    // Trigger Google Maps Integration for Polling Booth
+    if (lowerText.includes('booth') || lowerText.includes('location') || lowerText.includes('where')) {
+      setMessages(prev => [...prev, { role: 'user', text: userText }, { role: 'bot', text: 'Here is a map to help you find your nearest polling booth based on typical search locations:', isMap: true }]);
       return;
     }
 
@@ -103,25 +111,23 @@ const Simulator = () => {
 
   return (
     <div className="pt-32 pb-12 px-6 max-w-3xl mx-auto min-h-screen flex flex-col">
-      <div className="mb-8">
+      <header className="mb-8">
         <h1 className="text-3xl font-black mb-2">Voting Journey</h1>
-        <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
+        <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden" role="progressbar" aria-valuenow="33" aria-valuemin="0" aria-valuemax="100">
           <div className="h-full bg-india-saffron w-1/3"></div>
         </div>
-      </div>
+      </header>
 
-      <div className="flex-1 glass-card flex flex-col overflow-hidden">
+      <main className="flex-1 glass-card flex flex-col overflow-hidden">
         {/* Chat Area */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide">
+        <section ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide" aria-live="polite" aria-atomic="false" aria-label="Chat history">
           {messages.map((m, i) => (
-            <motion.div 
+            <article 
               key={i} 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
               className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start gap-4'}`}
             >
               {m.role === 'bot' && (
-                <div className="w-10 h-10 shrink-0 bg-india-saffron rounded-full flex items-center justify-center border-2 border-india-navy">
+                <div className="w-10 h-10 shrink-0 bg-india-saffron rounded-full flex items-center justify-center border-2 border-india-navy" aria-hidden="true">
                   <Bot size={20} className="text-india-navy" />
                 </div>
               )}
@@ -135,12 +141,28 @@ const Simulator = () => {
                   {m.text}
                 </div>
 
+                {m.isMap && (
+                  <div className="w-full h-48 md:h-64 rounded-xl overflow-hidden border border-white/20 mt-2">
+                    <iframe
+                      width="100%"
+                      height="100%"
+                      style={{ border: 0 }}
+                      loading="lazy"
+                      allowFullScreen
+                      referrerPolicy="no-referrer-when-downgrade"
+                      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d14008.114827184285!2d77.2090212!3d28.6269415!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390cfd37b741d057%3A0xc46ce44baa0eb920!2sElection%20Commission%20of%20India!5e0!3m2!1sen!2sin!4v1700000000000"
+                      title="Google Maps Location of Election Commission"
+                    ></iframe>
+                  </div>
+                )}
+
                 {m.options && (
-                  <div className="flex gap-2 flex-wrap">
+                  <div className="flex gap-2 flex-wrap" role="group" aria-label="Suggested responses">
                     {m.options.map(opt => (
                       <button 
                         key={opt}
                         onClick={() => handleSend(opt)}
+                        aria-label={`Reply: ${opt}`}
                         className="px-4 py-2 bg-india-navy border border-white/20 rounded-full text-sm font-bold hover:bg-white/10 transition-colors"
                       >
                         {opt}
@@ -149,37 +171,43 @@ const Simulator = () => {
                   </div>
                 )}
               </div>
-            </motion.div>
+            </article>
           ))}
           {isLoading && (
-             <div className="flex justify-start gap-4">
+             <div className="flex justify-start gap-4" aria-live="assertive">
                <div className="w-10 h-10 shrink-0 bg-india-saffron/50 rounded-full flex items-center justify-center">
-                 <Loader2 size={20} className="animate-spin text-white" />
+                 <Loader2 size={20} className="animate-spin text-white" aria-hidden="true" />
+                 <span className="sr-only">Bot is typing...</span>
                </div>
              </div>
           )}
-        </div>
+        </section>
 
         {/* Input Area */}
-        <div className="p-4 bg-white/5 border-t border-white/10">
+        <form 
+          className="p-4 bg-white/5 border-t border-white/10"
+          onSubmit={(e) => { e.preventDefault(); handleSend(input); }}
+        >
           <div className="relative">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSend(input)}
               placeholder="Type your answer here..."
+              aria-label="Message input"
               className="w-full bg-india-navy border border-white/20 rounded-xl py-4 pl-4 pr-12 text-white placeholder:text-slate-500 focus:outline-none focus:border-india-saffron transition-colors"
             />
             <button 
-              onClick={() => handleSend(input)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-india-saffron rounded-lg text-india-navy hover:bg-white transition-colors"
+              type="submit"
+              aria-label="Send message"
+              disabled={isLoading || !input.trim()}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-india-saffron rounded-lg text-india-navy hover:bg-white transition-colors disabled:opacity-50"
             >
-              <Send size={20} />
+              <Send size={20} aria-hidden="true" />
             </button>
           </div>
-        </div>
-      </div>
+        </form>
+      </main>
     </div>
   );
 };

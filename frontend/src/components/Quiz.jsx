@@ -56,9 +56,9 @@ const Quiz = () => {
 
   if (isFinished) {
     return (
-      <div className="pt-32 pb-12 px-6 max-w-2xl mx-auto min-h-screen text-center">
+      <main className="pt-32 pb-12 px-6 max-w-2xl mx-auto min-h-screen text-center" aria-live="polite">
         <div className="glass-card p-12">
-          <div className="w-24 h-24 bg-india-saffron/20 rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="w-24 h-24 bg-india-saffron/20 rounded-full flex items-center justify-center mx-auto mb-6" aria-hidden="true">
             <Trophy size={48} className="text-india-saffron" />
           </div>
           <h2 className="text-4xl font-black mb-4">Lesson Complete!</h2>
@@ -66,40 +66,45 @@ const Quiz = () => {
           <button 
             onClick={() => window.location.reload()}
             className="btn-primary w-full"
+            aria-label="Restart Quiz"
           >
             Continue Learning
           </button>
         </div>
-      </div>
+      </main>
     );
   }
 
   const q = quizData[currentQ];
 
   return (
-    <div className="pt-32 pb-12 px-6 max-w-2xl mx-auto min-h-screen flex flex-col">
+    <main className="pt-32 pb-12 px-6 max-w-2xl mx-auto min-h-screen flex flex-col">
       {/* Progress Header */}
-      <div className="flex items-center gap-4 mb-12">
-        <button onClick={() => window.history.back()} className="text-slate-500 hover:text-white">
-          <X size={24} />
+      <header className="flex items-center gap-4 mb-12">
+        <button onClick={() => window.history.back()} className="text-slate-500 hover:text-white" aria-label="Exit quiz">
+          <X size={24} aria-hidden="true" />
         </button>
-        <div className="flex-1 h-4 bg-slate-800 rounded-full overflow-hidden">
+        <div className="flex-1 h-4 bg-slate-800 rounded-full overflow-hidden" role="progressbar" aria-valuenow={(currentQ / quizData.length) * 100} aria-valuemin="0" aria-valuemax="100">
           <motion.div 
             className="h-full bg-india-green"
             initial={{ width: 0 }}
             animate={{ width: `${(currentQ / quizData.length) * 100}%` }}
           />
         </div>
-        <div className="flex items-center gap-2 font-bold text-india-saffron">
-          <Trophy size={20} /> {xp}
+        <div className="flex items-center gap-2 font-bold text-india-saffron" aria-label={`Score: ${xp} XP`}>
+          <Trophy size={20} aria-hidden="true" /> {xp}
         </div>
+      </header>
+
+      <div aria-live="assertive" className="sr-only">
+        {isWrong ? "Incorrect answer. Try again." : selectedOpt ? "Correct answer!" : `Question ${currentQ + 1}: ${q.question}`}
       </div>
 
-      <h2 className="text-3xl md:text-4xl font-black mb-12 leading-tight">
+      <h2 className="text-3xl md:text-4xl font-black mb-12 leading-tight" id="quiz-question">
         {q.question}
       </h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-auto mb-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-auto mb-12" role="group" aria-labelledby="quiz-question">
         {q.options.map((opt) => {
           let stateClass = '';
           if (selectedOpt === opt) {
@@ -110,16 +115,18 @@ const Quiz = () => {
             <motion.button
               key={opt}
               onClick={() => handleSelect(opt)}
+              aria-pressed={selectedOpt === opt}
+              disabled={selectedOpt !== null && selectedOpt !== opt}
               animate={isWrong && selectedOpt === opt ? { x: [-10, 10, -10, 10, 0] } : {}}
               transition={{ duration: 0.4 }}
-              className={`duo-btn ${stateClass}`}
+              className={`duo-btn ${stateClass} disabled:opacity-50`}
             >
               {opt}
             </motion.button>
           );
         })}
       </div>
-    </div>
+    </main>
   );
 };
 

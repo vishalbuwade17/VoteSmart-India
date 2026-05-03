@@ -38,7 +38,7 @@ const Hero = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="relative h-screen w-full flex flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-india-saffron via-white to-india-green">
+    <main className="relative h-screen w-full flex flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-india-saffron via-white to-india-green" role="main" aria-label="VoteSmart India Home">
       
       {/* Floating Particles Background */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
@@ -83,7 +83,7 @@ const Hero = () => {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2, duration: 0.5 }}
         >
-          Understand Elections <br />
+          <span className="block">Understand Elections</span>
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-india-saffron to-india-green">
             Like Never Before.
           </span>
@@ -127,7 +127,7 @@ const Hero = () => {
         </motion.div>
 
       </motion.div>
-    </div>
+    </main>
   );
 };
 

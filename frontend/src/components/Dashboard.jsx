@@ -7,6 +7,12 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
+/**
+ * Dashboard Component
+ * Displays a grid of available learning modules with progress tracking.
+ * 
+ * @returns {React.ReactElement} The Dashboard view.
+ */
 const Dashboard = () => {
   const navigate = useNavigate();
 
@@ -69,13 +75,13 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="pt-32 pb-12 px-6 max-w-6xl mx-auto min-h-screen">
-      <div className="mb-12">
+    <main className="pt-32 pb-12 px-6 max-w-6xl mx-auto min-h-screen">
+      <header className="mb-12">
         <h1 className="text-4xl md:text-5xl font-black mb-4">Your Civic <span className="text-india-saffron">Journey</span></h1>
         <p className="text-slate-400 text-lg">Pick up where you left off. Every step makes you a smarter voter.</p>
-      </div>
+      </header>
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <section className="grid md:grid-cols-2 gap-6" aria-label="Learning Modules">
         {modules.map((mod, i) => (
           <motion.div
             key={mod.id}
@@ -84,7 +90,11 @@ const Dashboard = () => {
             transition={{ delay: i * 0.1 }}
             whileHover={{ scale: 1.02 }}
             onClick={() => navigate(mod.path)}
-            className="glass-card p-6 md:p-8 cursor-pointer relative overflow-hidden group border-b-4"
+            role="button"
+            tabIndex={0}
+            onKeyPress={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(mod.path); }}
+            aria-label={`Open ${mod.title} module, currently at ${mod.progress}% progress`}
+            className="glass-card p-6 md:p-8 cursor-pointer relative overflow-hidden group border-b-4 focus:outline-none focus:ring-2 focus:ring-white"
             style={{ borderBottomColor: mod.color }}
           >
             {/* Background Glow */}
@@ -113,8 +123,8 @@ const Dashboard = () => {
             </div>
           </motion.div>
         ))}
-      </div>
-    </div>
+      </section>
+    </main>
   );
 };
 

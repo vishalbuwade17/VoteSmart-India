@@ -3,7 +3,14 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import compression from 'compression';
+
+dotenv.config();
+
+import logger from './services/logger.js';
+import { getElectionBotResponse } from './services/gemini.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -13,49 +20,41 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-app.use(cors());
+// Security & Efficiency Middlewares
+app.use(helmet({
+  contentSecurityPolicy: false, // Disabled for simple React serving without strict CSP setups
+}));
+app.use(compression());
+app.use(cors({
+  origin: '*', // In production, this should be restricted to specific domains
+  methods: ['GET', 'POST']
+}));
 app.use(express.json());
 
-// Gemini Setup
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// Rate Limiting to prevent spam/DDoS
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: { error: 'Too many requests from this IP, please try again later.' }
+});
+app.use('/api/', apiLimiter);
 
+// Gemini Setup
+// API Endpoint for the AI Bot
 app.post('/api/ask-election-bot', async (req, res) => {
   const { message, context, history } = req.body;
   
+  // Basic Input Validation
+  if (!message || typeof message !== 'string' || message.trim().length === 0) {
+    logger.warn('Invalid request payload: Missing or empty message');
+    return res.status(400).json({ error: 'Message is required and must be a string.' });
+  }
+
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    
-    // Construct a prompt that includes history for conversational context
-    let promptStr = `
-You are "VoteSmart India", an intelligent civic assistant that helps users understand the Indian election system in a simple, interactive, and engaging way.
-You aim for "Apple-level simplicity + Duolingo-level engagement + Govt-level trust".
-
-User Context: ${context || 'General citizen'}
-
-Rules:
-1. Explain election concepts in simple English + Hinglish (e.g., "Voting aapka adhikar hai").
-2. Keep answers concise, highly structured, and easy to read.
-3. Use bullet points and emojis to break up text.
-4. If appropriate, ask an engaging follow-up question.
-5. Remain strictly neutral and factual. Do not express political bias.
-`;
-
-    if (history && history.length > 0) {
-      promptStr += "\nConversation History:\n";
-      history.forEach(msg => {
-        promptStr += `${msg.role === 'user' ? 'User' : 'VoteSmart'}: ${msg.text}\n`;
-      });
-    }
-
-    promptStr += `\nUser Message: ${message}\nVoteSmart:`;
-
-    const result = await model.generateContent(promptStr);
-    const response = await result.response;
-    const text = response.text();
-    
+    const text = await getElectionBotResponse(message, context, history);
+    logger.info('Successfully generated AI response', { context });
     res.json({ response: text });
   } catch (error) {
-    console.error('Gemini API Error:', error);
     res.status(500).json({ error: 'Failed to process request. Please try again.' });
   }
 });
@@ -68,4 +67,10 @@ app.use((req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
 });
 
-app.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));
+// Centralized error handling middleware
+app.use((err, req, res, next) => {
+  logger.error('Unhandled Server Error:', { error: err.message, stack: err.stack });
+  res.status(500).json({ error: 'Internal Server Error' });
+});
+
+app.listen(PORT, '0.0.0.0', () => logger.info(`Server running on port ${PORT}`));
