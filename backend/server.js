@@ -63,8 +63,8 @@ Rules:
 // Serve frontend static files
 app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
-// Catch-all route for React Router
-app.get('*', (req, res) => {
+// Catch-all route for React Router (using app.use to avoid Express 5 wildcard regex errors)
+app.use((req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
 });
 
