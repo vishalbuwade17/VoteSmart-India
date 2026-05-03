@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-india-navy text-white antialiased overflow-x-hidden;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-[0_8px_32px_0_rgba(31,38,135,0.37)];
+  }
+  
+  .glass-panel {
+    @apply bg-india-navy/60 backdrop-blur-2xl border border-white/10;
+  }
+  
+  .btn-primary {
+    @apply px-8 py-4 bg-india-navy text-white font-bold rounded-2xl hover:scale-105 transition-all shadow-xl hover:shadow-2xl border border-white/10;
+  }
+  
+  .btn-secondary {
+    @apply px-8 py-4 bg-white text-india-navy font-bold rounded-2xl hover:scale-105 transition-all shadow-xl hover:shadow-2xl;
+  }
+  
+  .btn-accent {
+    @apply px-8 py-4 bg-india-green text-white font-bold rounded-2xl hover:scale-105 transition-all shadow-xl hover:shadow-india-green/50;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Duolingo style big buttons */
+.duo-btn {
+  @apply w-full p-4 text-left border-2 border-white/20 rounded-2xl font-bold text-lg transition-all hover:bg-white/5 hover:border-white/40 active:translate-y-1 active:border-b-0 border-b-[6px];
+}
+
+.duo-btn-correct {
+  @apply border-india-green bg-india-green/20 text-india-green border-b-india-green/50;
+}
+
+.duo-btn-wrong {
+  @apply border-red-500 bg-red-500/20 text-red-500 border-b-red-500/50;
+}
